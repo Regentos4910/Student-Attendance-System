@@ -1,0 +1,23 @@
+Python Version: 3.8+
+
+System Dependencies:
+  For Excel processing: libxml2 and libxslt
+
+##Installation Steps:
+  
+  1. Create virtual environment
+        python3 -m venv venv
+
+  2. Activate it
+        source venv/bin/activate  (Linux/MacOS)
+        venv\Scripts\activate  (Windows)
+
+  3. Install requirements given in the file
+        pip install -r requirements.txt
+
+  4. Set environment variables
+        echo "FLASK_APP=run.py" > .env
+        echo "FLASK_ENV=development" >> .env
+
+  5. Run the application using 
+        flask run
