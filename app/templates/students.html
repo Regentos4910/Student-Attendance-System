@@ -1,39 +1,163 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student List</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance System</title>
     <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #f2f2f2; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .filter-container {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .actions {
+            white-space: nowrap;
+        }
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .flash-messages {
+            margin: 15px 0;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        .flash-warning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
     </style>
 </head>
 <body>
-    <h1>Student List</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Roll No.</th>
-                <th>Name</th>
-                <th>Class</th>
-                <th>Parent Email</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in students %}
-            <tr>
-                <td>{{ student.roll_number }}</td>
-                <td>{{ student.student_name }}</td>
-                <td>{{ student.class_section }}</td>
-                <td>{{ student.parent_email }}</td>
-                <td>
-                    <a href="/send-email/{{ student.id }}">Send Email</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="/import/">Import Students</a>
+    <h1>Student Attendance Management</h1>
+    
+    <!-- Flash Messages -->
+    <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Filter Form -->
+    <div class="filter-container">
+        <form method="get" action="{{ url_for('main.index') }}">
+            <label for="class_filter">Filter by Class:</label>
+            <select name="class_filter" id="class_filter" onchange="this.form.submit()">
+                <option value="">All Classes</option>
+                {% for section in class_sections %}
+                    <option value="{{ section }}" {% if section == selected_class %}selected{% endif %}>{{ section }}</option>
+                {% endfor %}
+            </select>
+            <a href="{{ url_for('main.index') }}" class="btn btn-danger">Reset</a>
+        </form>
+    </div>
+
+    <!-- Student List Form -->
+    <form method="post" action="{{ url_for('main.send_emails') }}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Roll No.</th>
+                    <th>Student Name</th>
+                    <th>Class</th>
+                    <th>Parent Email</th>
+                    <th>Parent Phone</th>
+                    <th class="actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td><input type="checkbox" name="student_ids" value="{{ student.id }}"></td>
+                    <td>{{ student.roll_number }}</td>
+                    <td>{{ student.student_name }}</td>
+                    <td>{{ student.class_section }}</td>
+                    <td>{{ student.parent_email }}</td>
+                    <td>{{ student.parent_phone }}</td>
+                    <td class="actions">
+                        <a href="{{ url_for('main.student_details', student_id=student.id) }}" class="btn btn-primary">Details</a>
+                        <a href="{{ url_for('main.send_test_email', student_id=student.id) }}" class="btn btn-success">Test Email</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No students found. <a href="{{ url_for('import.import_data') }}">Import students</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if students %}
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">Send Emails to Selected Parents</button>
+            <span style="margin-left: 10px;">{{ students|length }} student(s) found</span>
+        </div>
+        {% endif %}
+    </form>
+
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('import.import_data') }}" class="btn btn-primary">Import New Students</a>
+    </div>
 </body>
 </html>
