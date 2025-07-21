@@ -1,23 +1,164 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Import Students</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .import-form {
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f9f9f9;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            margin-right: 10px;
+        }
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .instructions ul {
+            padding-left: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Import Student Data</h1>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <ul class="flashes">
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
+    <div class="container">
+        <h1>Import Student Data</h1>
+        
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Import Form -->
+        <form method="post" enctype="multipart/form-data" class="import-form">
+            <div class="form-group">
+                <label for="file">Select Excel File:</label>
+                <input type="file" name="file" id="file" accept=".xlsx,.xls" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Import Students</button>
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Back to Student List</a>
+        </form>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <h3>File Requirements:</h3>
+            <ul>
+                <li>Excel file (.xlsx or .xls format)</li>
+                <li>Must include these exact column headers:
+                    <ul>
+                        <li>Roll Number</li>
+                        <li>PRN</li>
+                        <li>Student Name</li>
+                        <li>Student Email</li>
+                        <li>Student Phone</li>
+                        <li>Parent Name</li>
+                        <li>Parent Email</li>
+                        <li>Parent Phone</li>
+                        <li>Class</li>
+                    </ul>
+                </li>
+                <li>First row should contain headers</li>
+                <li>Maximum file size: 5MB</li>
             </ul>
-        {% endif %}
-    {% endwith %}
-    
-    <form method="post" enctype="multipart/form-data">
-        <input type="file" name="file" accept=".xlsx,.xls">
-        <button type="submit">Import Excel</button>
-    </form>
+        </div>
+    </div>
+
+    <script>
+        // Show file name when selected
+        document.getElementById('file').addEventListener('change', function(e) {
+            const fileName = e.target.files[0]?.name || 'No file selected';
+            const label = this.previousElementSibling;
+            label.textContent = `Selected: ${fileName}`;
+        });
+    </script>
 </body>
 </html>

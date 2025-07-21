@@ -10,3 +10,7 @@ os.makedirs(instance_path, exist_ok=True)
 SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(instance_path, "app.db")}'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SECRET_KEY = 'your-secret-key-here'
+
+MS_CLIENT_ID = 'your-client-id'
+MS_TENANT_ID = 'your-tenant-id'
+MS_CLIENT_SECRET = 'your-client-secret'

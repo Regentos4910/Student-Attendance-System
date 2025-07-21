@@ -1,39 +1,311 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Student List</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management</title>
     <style>
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-        th { background-color: #f2f2f2; }
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f7fa;
+            color: var(--dark);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+        }
+        h1 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .filter-section {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        .form-group {
+            margin-bottom: 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: var(--dark);
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        .checkbox-cell {
+            width: 40px;
+            text-align: center;
+        }
+        .actions-cell {
+            white-space: nowrap;
+        }
+        .actions-cell a {
+            margin-right: 5px;
+        }
+        .no-students {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background-color: var(--success);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h1>Student List</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Roll No.</th>
-                <th>Name</th>
-                <th>Class</th>
-                <th>Parent Email</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for student in students %}
-            <tr>
-                <td>{{ student.roll_number }}</td>
-                <td>{{ student.student_name }}</td>
-                <td>{{ student.class_section }}</td>
-                <td>{{ student.parent_email }}</td>
-                <td>
-                    <a href="/send-email/{{ student.id }}">Send Email</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="/import/">Import Students</a>
+    <div class="container">
+        <h1>
+            Student Attendance
+            <div class="header-actions">
+                <a href="{{ url_for('import.import_data') }}" class="btn btn-primary">Import Students</a>
+            </div>
+        </h1>
+
+        <!-- Flash Messages -->
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Filters and Email Form -->
+        <form method="post" action="{{ url_for('main.send_batch_emails') }}" id="emailForm">
+            <div class="filter-section">
+                <div class="form-group">
+                    <label for="class_filter">Class</label>
+                    <select name="class_filter" id="class_filter" onchange="filterStudents()">
+                        <option value="">All Classes</option>
+                        {% for section in class_sections %}
+                            <option value="{{ section }}" {% if section == selected_class %}selected{% endif %}>{{ section }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="absent_date">Absence Date</label>
+                    <input type="date" id="absent_date" name="absent_date" 
+                           value="{{ datetime.now().strftime('%Y-%m-%d') }}" required>
+                </div>
+
+                <button type="submit" class="btn btn-success" id="sendEmailsBtn">Send Selected Emails</button>
+                <a href="{{ url_for('main.index') }}" class="btn btn-danger">Reset</a>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress" id="progressBar"></div>
+                </div>
+                <div class="progress-text" id="progressText">0% Complete</div>
+            </div>
+
+            <!-- Student Table -->
+            <table>
+                <thead>
+                    <tr>
+                        <th class="checkbox-cell">
+                            <input type="checkbox" id="selectAll">
+                        </th>
+                        <th>Roll No.</th>
+                        <th>Student Name</th>
+                        <th>Class</th>
+                        <th>Parent Email</th>
+                        <th>Parent Phone</th>
+                        <th class="actions-cell">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if students %}
+                        {% for student in students %}
+                        <tr>
+                            <td class="checkbox-cell">
+                                <input type="checkbox" name="student_ids" value="{{ student.id }}" class="student-checkbox">
+                            </td>
+                            <td>{{ student.roll_number }}</td>
+                            <td>{{ student.student_name }}</td>
+                            <td>{{ student.class_section }}</td>
+                            <td>{{ student.parent_email }}</td>
+                            <td>{{ student.parent_phone }}</td>
+                            <td class="actions-cell">
+                                <a href="{{ url_for('main.student_details', student_id=student.id) }}" class="btn btn-primary">Details</a>
+                                <a href="{{ url_for('main.send_test_email', student_id=student.id) }}" class="btn btn-success">Test Email</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="no-students">
+                                No students found. <a href="{{ url_for('import.import_data') }}">Import students</a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    <script>
+        // Select all checkbox
+        document.getElementById('selectAll').addEventListener('change', function(e) {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = e.target.checked;
+            });
+        });
+
+        // Filter students without reload
+        function filterStudents() {
+            const classFilter = document.getElementById('class_filter').value;
+            window.location.href = `?class_filter=${encodeURIComponent(classFilter)}`;
+        }
+
+        // Email sending with progress
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            const selectedCount = document.querySelectorAll('.student-checkbox:checked').length;
+            if (selectedCount === 0) {
+                alert('Please select at least one student');
+                e.preventDefault();
+                return;
+            }
+
+            const confirmSend = confirm(`Send emails to ${selectedCount} parents?`);
+            if (!confirmSend) {
+                e.preventDefault();
+                return;
+            }
+
+            // Show progress bar
+            document.getElementById('progressContainer').style.display = 'block';
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const sendBtn = document.getElementById('sendEmailsBtn');
+            
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+            
+            // Simulate progress (replace with actual progress from server)
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${progress}% Complete`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                }
+            }, 300);
+        });
+    </script>
 </body>
 </html>
